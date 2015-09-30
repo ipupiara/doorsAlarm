@@ -12,17 +12,27 @@
 
 #include "hawaif.h"
 
-#define RELAYPIN   PB2
-#define INDIALINEPIN   PB1
-#define TANGOLINEPIN   PB0     //  these 3 need to be pb0 .. pb2   !
-							// pb3 is adc3 analog input, hardcoded due to need to set admux 
-#define RELAYSWITCH	 PB4	// pb4 is relay switch
+enum doorStates  {
+		doorsOpen,
+		doorsClosed
+	};
 
 
-#define PINMASK  ((1<<PB0) | (1<< PB1) | (1<<PB2))
-// PB3 used as ADC3
-//#define FACTORLOW  0.078125
-//#define FACTORHIGH 0.2
+#define     servoPin	PORTD5
+#define		servoDDR	DDRD		// it is needed to set pin as output  for timer 1   (16 bit timer)
+
+#define     doorsPort	PORTB
+#define		doorsPin	PORTB1
+#define		doorsPortInputPins	PINB
+#define		doorsDDR	DDRB
+#define		doorsPCIE	PCIE1
+#define     doorsPCMSK	PCMSK1
+#define		doorsPCINT	PCINT9
+#define     doorsPCI	PCINT1
+
+int8_t		lastDoorState;
+
+
 
 int16_t lastADCVal;
 uint16_t  tickCnt;
