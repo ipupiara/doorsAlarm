@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "doorsAlarm", "doorsAlarm\doorsAlarm.cproj", "{56332789-5927-4543-85F3-45E95FA7F676}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{56332789-5927-4543-85F3-45E95FA7F676}.Debug|AVR.ActiveCfg = Debug|AVR
+		{56332789-5927-4543-85F3-45E95FA7F676}.Debug|AVR.Build.0 = Debug|AVR
+		{56332789-5927-4543-85F3-45E95FA7F676}.Release|AVR.ActiveCfg = Release|AVR
+		{56332789-5927-4543-85F3-45E95FA7F676}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
