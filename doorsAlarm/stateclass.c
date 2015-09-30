@@ -20,39 +20,24 @@ int8_t wishCounter;
 CDoorsAlarmEvent* getNextEvent(CDoorsAlarmEvent* pev)
 {
 	CDoorsAlarmEvent* res = NULL;
-	if (tangoPressedEvent ==  1) {
-		tangoPressedEvent = 0;
-		pev->evType = evTangoPressed;
+	if (fatalErrorOccurred) {     // do this with highest priority (at the beginning)
+		//			fatalErrorOccurred = 0;	  // once occurred state stays until restart/reset
+		pev->evType = evFatalError;
 		res = pev;
 	}
-	if (tangoReleasedEvent ==  1) {
-		tangoReleasedEvent = 0;
-		pev->evType = evTangoReleased;
+	if (doorsOpenEvent ==  1) {
+		doorsOpenEvent = 0;
+		pev->evType = evDoorsOpen;
+		res = pev;
+	}
+	if (doorsClosedEvent ==  1) {
+		doorsClosedEvent = 0;
+		pev->evType = evDoorsClosed;
 		res = pev;
 	}
 	if (timerReachedEvent ==  1) {
 		timerReachedEvent = 0;
 		pev->evType = evTimerExpired;
-		res = pev;
-	}
-	if (indiaLineOnEvent ==  1) {
-		indiaLineOnEvent = 0;
-		pev->evType = evIndiaSwitchedOn;
-		res = pev;
-	}
-	if (indaLineOffEvent ==  1) {
-		indaLineOffEvent = 0;
-		pev->evType = evIndiaSwitchedOff;
-		res = pev;
-	}
-	if (evMotorOutput53sSwitchedHighEvent ==  1) {
-		evMotorOutput53sSwitchedHighEvent = 0;
-		pev->evType = evMotorOutput53sSwitchedHigh;
-		res = pev;
-	}
-	if (evMotorOuput53sSwitchedLowEvent ==  1) {
-		evMotorOuput53sSwitchedLowEvent = 0;
-		pev->evType = evMotorOutput53sSwitchedLow;
 		res = pev;
 	}
 	return res;
@@ -67,12 +52,6 @@ uStInt evDoorsAlarmChecker(void)
 
 void entryIdleState(void)
 {
-	switchRelay53ToMoterOutput();
-	if(isTangoLineOn()) {
-		tangoPressedEvent = 1;
-	} else if (isIndiaLineOn()) {
-		indiaLineOnEvent = 1;		
-	}
 	setState("idl");
 }
 
@@ -80,24 +59,9 @@ uStInt evIdleChecker(void)
 {
 	uStInt res = uStIntNoMatch;
 
-	if (currentEvent->evType == evMotorOutput53sSwitchedLow) 
+	if (currentEvent->evType == evDoorsClosed)
 	{	
-//			BEGIN_EVENT_HANDLER(PJoesTriacStateChart, eStateTriacIdle);
-				// No event action.
-			switchRelay53ToMoterOutput();	
-//			END_EVENT_HANDLER(PJoesTriacStateChart);
-			res =  uStIntHandlingDone;
-	}
-	if (currentEvent->evType == evTangoPressed)
-	{	
-			BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateTangoPressed);
-				// No event action.
-			END_EVENT_HANDLER(PDoorsAlarmStateChart);
-			res =  uStIntHandlingDone;
-	}
-	if (currentEvent->evType == evIndiaSwitchedOn) 
-	{	
-			BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateIndiaOn);
+			BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateLightOnAlarm);
 				// No event action.
 			END_EVENT_HANDLER(PDoorsAlarmStateChart);
 			res =  uStIntHandlingDone;
@@ -105,19 +69,18 @@ uStInt evIdleChecker(void)
 	return (res); 
 }
 
-void entryTangoPressedState(void)
+void entryLightOnAlarmState(void)
 {
-	switchRelayToPlusLine15();
-	setState("tnP");
+	setState("LOA");
 }
 
-uStInt evTangoPressedChecker(void)
+uStInt evLightOnAlarmChecker(void)
 {
 	uStInt res = uStIntNoMatch;
 
-	if (currentEvent->evType == evTangoReleased){
+	if (currentEvent->evType == evDoorsOpen){
 	
-		BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateTangoReleased);
+		BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateIdle);
 			// No event action.
 		END_EVENT_HANDLER(PDoorsAlarmStateChart);
 
@@ -126,23 +89,22 @@ uStInt evTangoPressedChecker(void)
 	return (res); 
 }
 
-void entryTangoReleasedState(void)
+void entryLightOnAlarmActiveState(void)
 {
-	wishCounter = 0;
-	setState("tnR");
+	setState("LAA");
 }
 
-uStInt evTangoReleasedChecker(void)
+uStInt evLightOnAlarmActiveChecker(void)
 {
 	int8_t res;
 	
 	res = uStIntNoMatch;
 
-	if (currentEvent->evType == evMotorOutput53sSwitchedHigh)  {	
+	if (currentEvent->evType == evTimerExpired)  {	
 		wishCounter ++;
 		if ( wishCounter >= 3 )
 		{
-			BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateIdle);
+			BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateLightOnAlarmPaused);
 				// No event action.
 			END_EVENT_HANDLER(PDoorsAlarmStateChart);
 			res =  uStIntHandlingDone;
@@ -152,50 +114,47 @@ uStInt evTangoReleasedChecker(void)
 	return res;
 }
 
-void entryIndiaOnState(void)
+void entryLightOnAlarmPausedState(void)
 {
-	startADCPolling();
-	switchRelayToPlusLine15();
-	stopIntervalTimer();
-	setState("ind");
+	setState("LAP");
 }
 
-void exitIndiaOnState(void)
-{
-//	printf("exit I\n");
-	stopADCPolling();
-	stopIntervalTimer();
-}
-
-uStInt evIndiaOnChecker(void)
+uStInt evLightOnAlarmPausedChecker(void)
 {
 //	printf("check for event in State evStateIdle\n");
 	uStInt res = uStIntNoMatch;
 
-	if ((currentEvent->evType == evTangoPressed) || (currentEvent->evType == evIndiaSwitchedOff))
+	if (currentEvent->evType == evTimerExpired)
 	{	
-		BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateIdle);
+		BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateLightOnAlarmActive);
 		// No event action.
 
 		END_EVENT_HANDLER(PDoorsAlarmStateChart);
 		res =  uStIntHandlingDone;		
 	}
-	if (currentEvent->evType == evMotorOutput53sSwitchedHigh) 
-	{	
-		switchRelay53ToMoterOutput();
-		res =  uStIntHandlingDone;		
-	}
-	if (currentEvent->evType == evMotorOutput53sSwitchedLow) 
-	{	
-		startIntervalTimer();
-		res =  uStIntHandlingDone;		
-	}
-	if (currentEvent->evType == evTimerExpired)
-	{
-		stopIntervalTimer();
-		switchRelayToPlusLine15();
-		res =  uStIntHandlingDone;
-	}
+	return (res);
+}
+
+
+
+
+void entryFatalErrorState(void)
+{
+	printf("entry FatalError\n");
+	printf("**************fatal Error: %s *************************\n",lastFatalErrorString);
+	displayFatalError();
+}
+
+void exitFatalErrorState(void)
+{
+	printf("exit FatalError\n");
+}
+
+uStInt evFatalErrorChecker(void)
+{
+	uStInt res = uStIntNoMatch;
+	//	printf("check for event in State evStateIdle\n");
+
 	return (res);
 }
 
@@ -230,30 +189,40 @@ xStateType xaStates[eNumberOfStates] = {
  		entryIdleState,
  		tfNull
 	},
- 	{eStateTangoPressed,
+ 	{eStateLightOnAlarm,
  		eStateDoorsAlarm,
- 		-1,
+ 		eStateLightOnAlarmActive,
  		0,
- 		evTangoPressedChecker,
- 		entryTangoPressedState,
+ 		evLightOnAlarmChecker,
+ 		entryLightOnAlarmState,
  		tfNull
 	},
-	{eStateTangoReleased,
- 		eStateDoorsAlarm,
+	{eStateLightOnAlarmActive,
+ 		eStateLightOnAlarm,
  		-1,
  		0,		 							
- 		evTangoReleasedChecker,
- 		entryTangoReleasedState,
+ 		evLightOnAlarmActiveChecker,
+ 		entryLightOnAlarmActiveState,
  		tfNull
 	}, 	 
-	{eStateIndiaOn,
+	{eStateLightOnAlarmPaused,
+		eStateLightOnAlarm,
+		-1,
+		0,
+		evLightOnAlarmPausedChecker,
+		entryLightOnAlarmPausedState,
+		tfNull
+	} ,
+
+	{eStateFatalError,
 		eStateDoorsAlarm,
 		-1,
 		0,
-		evIndiaOnChecker,
-		entryIndiaOnState,
-		exitIndiaOnState
-	} 
+		evFatalErrorChecker,
+		tfNull,
+		entryFatalErrorState,
+		exitFatalErrorState
+	}
 };
 
 

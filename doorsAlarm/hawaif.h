@@ -12,10 +12,10 @@
 int8_t  timerReachedEvent;
 int8_t  indiaLineOnEvent;
 int8_t   indaLineOffEvent;
-int8_t   tangoPressedEvent;
-int8_t	 tangoReleasedEvent;
-int8_t   evMotorOutput53sSwitchedHighEvent;
-int8_t   evMotorOuput53sSwitchedLowEvent ;
+int8_t   doorsOpenEvent;
+int8_t	 doorsClosedEvent;
+int8_t fatalErrorOccurred;
+char lastFatalErrorString [20];
 
 
 //#define testMethods   //used for simulation of wishermotor with a second AtTiny85 on breadboard

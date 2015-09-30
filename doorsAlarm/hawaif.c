@@ -67,10 +67,10 @@ ISR(PCINT0_vect)
 	newLinePin =  (pinB & (1<< TANGOLINEPIN));
 	oldLinePin =  (lastPinB  & (1<< TANGOLINEPIN));
 	if ( newLinePin && (!oldLinePin) ) {
-		tangoPressedEvent = 1;
+		doorsOpenEvent = 1;
 	}
 	if ( (!newLinePin) && oldLinePin ) {
-		tangoReleasedEvent = 1;
+		doorsClosedEvent = 1;
 	}
 	newLinePin =  (pinB  & (1<< RELAYPIN));
 	oldLinePin =  (lastPinB & (1<< RELAYPIN));
@@ -212,8 +212,8 @@ void initHW()
 	timerReachedEvent = 0;
 	indiaLineOnEvent = 0;
 	indaLineOffEvent = 0;
-	tangoPressedEvent = 0;
-	tangoReleasedEvent = 0;
+	doorsOpenEvent = 0;
+	doorsClosedEvent = 0;
 	evMotorOutput53sSwitchedHighEvent = 0;
 	evMotorOuput53sSwitchedLowEvent  = 0;
 	
