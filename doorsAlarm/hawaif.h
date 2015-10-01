@@ -9,46 +9,19 @@
 #ifndef HAWAIF_H_
 #define HAWAIF_H_
 
+int8_t  timerStarted;
 int8_t  timerReachedEvent;
-int8_t  indiaLineOnEvent;
-int8_t   indaLineOffEvent;
 int8_t   doorsOpenEvent;
 int8_t	 doorsClosedEvent;
 int8_t fatalErrorOccurred;
 char lastFatalErrorString [20];
 
+void startDurationTimer(int16_t secs);
+void stopDurationTimer();
 
-//#define testMethods   //used for simulation of wishermotor with a second AtTiny85 on breadboard
+void startAlarm();
 
-typedef char stateString [3];
-
-stateString * wwState;
-
-int16_t  stateEntryCnt;
-
-void setState(char* sta);
-
-void switchRelayToPlusLine15();
-
-void switchRelay53ToMoterOutput();
-
-void startADCPolling();
-
-void stopADCPolling();
-
-#ifdef testMethods
-
-	void startTimerIntervalSecs(int8_t secs);
-
-	void stopTimerIntervalSecs();
-
-#endif
-
-void startIntervalTimer();
-void stopIntervalTimer();
-
-int isTangoLineOn();
-int isIndiaLineOn();
+void stopAlarm();
 
 void initHW();
 

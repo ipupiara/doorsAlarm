@@ -12,10 +12,17 @@
 extern const uStInt uStIntHandlingDone;
 extern const uStInt uStIntNoMatch;
 
-
 CDoorsAlarmEvent* currentEvent;
 
-int8_t wishCounter;
+typedef char stateString [10];
+stateString * wwState;
+int16_t  stateEntryCnt;
+
+void setState(char* sta)
+{
+	wwState = (stateString *) sta;
+	++stateEntryCnt;
+}
 
 CDoorsAlarmEvent* getNextEvent(CDoorsAlarmEvent* pev)
 {
@@ -92,7 +99,17 @@ uStInt evLightOnAlarmChecker(void)
 void entryLightOnAlarmActiveState(void)
 {
 	setState("LAA");
+	startDurationTimer(5);
+	startAlarm();
 }
+
+void exitLightOnAlarmActiveState(void)
+{
+	setState("noS");
+	stopDurationTimer();
+	stopAlarm();
+}
+
 
 uStInt evLightOnAlarmActiveChecker(void)
 {
@@ -101,14 +118,11 @@ uStInt evLightOnAlarmActiveChecker(void)
 	res = uStIntNoMatch;
 
 	if (currentEvent->evType == evTimerExpired)  {	
-		wishCounter ++;
-		if ( wishCounter >= 3 )
-		{
-			BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateLightOnAlarmPaused);
-				// No event action.
-			END_EVENT_HANDLER(PDoorsAlarmStateChart);
-			res =  uStIntHandlingDone;
-		}
+		BEGIN_EVENT_HANDLER(PDoorsAlarmStateChart, eStateLightOnAlarmPaused);
+			// No event action.
+		END_EVENT_HANDLER(PDoorsAlarmStateChart);
+		res =  uStIntHandlingDone;
+		
 	}	
 	
 	return res;
@@ -117,6 +131,13 @@ uStInt evLightOnAlarmActiveChecker(void)
 void entryLightOnAlarmPausedState(void)
 {
 	setState("LAP");
+	startDurationTimer(15);
+}
+
+void exitLightOnAlarmPausedState(void)
+{
+	setState("noS");
+	stopDurationTimer();
 }
 
 uStInt evLightOnAlarmPausedChecker(void)
@@ -142,12 +163,13 @@ void entryFatalErrorState(void)
 {
 	printf("entry FatalError\n");
 	printf("**************fatal Error: %s *************************\n",lastFatalErrorString);
-	displayFatalError();
+	setState("fEr");
 }
 
 void exitFatalErrorState(void)
 {
 	printf("exit FatalError\n");
+	setState("noS");
 }
 
 uStInt evFatalErrorChecker(void)
@@ -203,7 +225,7 @@ xStateType xaStates[eNumberOfStates] = {
  		0,		 							
  		evLightOnAlarmActiveChecker,
  		entryLightOnAlarmActiveState,
- 		tfNull
+		exitLightOnAlarmActiveState	
 	}, 	 
 	{eStateLightOnAlarmPaused,
 		eStateLightOnAlarm,
@@ -211,7 +233,7 @@ xStateType xaStates[eNumberOfStates] = {
 		0,
 		evLightOnAlarmPausedChecker,
 		entryLightOnAlarmPausedState,
-		tfNull
+		exitLightOnAlarmPausedState
 	} ,
 
 	{eStateFatalError,
@@ -219,7 +241,6 @@ xStateType xaStates[eNumberOfStates] = {
 		-1,
 		0,
 		evFatalErrorChecker,
-		tfNull,
 		entryFatalErrorState,
 		exitFatalErrorState
 	}
@@ -234,7 +255,8 @@ void startStateCharts()
 	tfNull = (t_fvoid ) NULL;
 
 #endif 
-
+	stateEntryCnt = 0;
+	
  	PDoorsAlarmStateChart = & SDoorsAlarmStateChart; 
 	createTStatechart (& SDoorsAlarmStateChart, xaStates, eNumberOfStates, eStartState);
 	
