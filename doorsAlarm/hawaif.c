@@ -20,6 +20,34 @@ enum doorStates  {
 
 int8_t		lastDoorState;
 
+
+////////////////////////    begin buzzer code     &/////////////////////////
+
+
+void startBuzzer()
+{
+	TCCR2B  |=  (1 << CS22);      // set prescaler to 64
+}
+
+void stopBuzzer()
+{
+	TCCR2B  &=  ~((1 << CS22) |  (1 <<  CS21 ) | (1 << CS20) )   ;	//  clear any prescaler
+}
+
+void initBuzzer()
+{
+	// buzzer using pwm on timer 2
+	TCCR2A = (1 << WGM20) |  (1 <<  WGM21)  |  (1 << COM2B1)  ;
+	TCCR2B = (1  << WGM22)  ;
+	OCR2A =  0x22;      // top value
+	OCR2B =  0x11;      //  square wave of approx 5k  at prescaler  64
+	DDRD  |=  (1 <<  PORTD6);
+}
+
+/////////////////////////    end  buzzer code  ////////////////////////////
+
+
+
 ///////////////////////   begin alarm code  /////////////////////////////////////
 
 int8_t  TOVcnt;
@@ -40,19 +68,12 @@ void initAlarm()
 	
 	TIMSK1 =  ( 1<< TOIE1);
 	
+	DDRD |= (1<< PORTD5);  //   set OC1A as output
+	
 	// and for timer 1 for buzzer pwm code
 }
 
 
-void startBuzzer()
-{
-	
-}
-
-void stopBuzzer()
-{
-	
-}
 
 void setCOM1A(float pct)
 {
@@ -76,17 +97,18 @@ ISR(TIMER1_OVF_vect)
 {
 	cli();
 	if (TOVcnt > 1) {
-		if (TOVUpdateCnt == 50)  {
+		TOVcnt = 0;
+		if (TOVUpdateCnt > 50)  {
 			++ cycleCnt;
 			TOVUpdateCnt = 0;
 		}
-		TOVcnt = 0;
-		++ TOVUpdateCnt;     // just try some kind of cycle movement
-		if (TOVUpdateCnt < 10)  {
+													    // just try some kind of trivial cycle movement
+		if (TOVUpdateCnt <= 10)  {
 			setCOM1A ((float)TOVUpdateCnt /10);
 		}  else {
 			setCOM1A( (float) (1- ((TOVUpdateCnt - 10) / 40 )) );     
 		}
+		++ TOVUpdateCnt; 
 	 } else {
 		++TOVcnt;
 	}
@@ -153,25 +175,23 @@ int16_t getSecondsInDurationTimer()
 	return res;
 }
 
+void initDurationTimer()
+{
+	
+}
 
 
 //////////////////////       end durationtimer code    ///////////////////////
 
 /////////////////////        begin   doorsenosr   code   ////////////////////
 
+void initDoorSensor()
+{
+	
+}
+
 
 /////////////////////        end doorsensor code  /////////////////////////////
-
-ISR(PCINT0_vect)
-{
-
-}
-
-
-ISR(TIMER1_COMPA_vect)
-{   
-
-}
 
 
 void initHW()
@@ -182,12 +202,11 @@ void initHW()
 	timerStarted = 0;
 	timerReachedEvent = 0;
 	
-	// init servo pwm interface using timer 1
+	initBuzzer();   // init pwm interface for buzzer using timer 2
+	initAlarm();     // init servo pwm interface using timer 1
+	initDurationTimer();  // using timer 0
+	initDoorSensor();
 	
-	// init pwm interface for buzzer using timer 2
-	// also use this timer for fast value setting on servomotor interface 
-	
-
 	sei();   
 }
 
