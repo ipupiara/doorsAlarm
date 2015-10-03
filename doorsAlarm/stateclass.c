@@ -117,6 +117,7 @@ void exitLightOnAlarmActiveState(void)
 	setState("noS");
 	stopDurationTimer();
 	stopAlarm();
+	stopBuzzer();
 }
 
 
