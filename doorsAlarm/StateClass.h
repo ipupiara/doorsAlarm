@@ -16,6 +16,7 @@ enum eEventTypes
 	evDoorsOpen,
 	evDoorsClosed,
 	evTimerExpired,
+	evSecondsTick,
 	evFatalError
 };
 

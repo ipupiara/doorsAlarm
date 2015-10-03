@@ -47,6 +47,14 @@ CDoorsAlarmEvent* getNextEvent(CDoorsAlarmEvent* pev)
 		pev->evType = evTimerExpired;
 		res = pev;
 	}
+	if (runningSecondsTick){
+		//		cli();    // 8-bit access is already atomic
+		runningSecondsTick = 0;
+		//		sei();
+		pev->evType = evSecondsTick;
+		res  = pev;
+	}
+
 	return res;
 }
 
@@ -101,6 +109,7 @@ void entryLightOnAlarmActiveState(void)
 	setState("LAA");
 	startDurationTimer(5);
 	startAlarm();
+	startBuzzer();
 }
 
 void exitLightOnAlarmActiveState(void)
@@ -124,7 +133,13 @@ uStInt evLightOnAlarmActiveChecker(void)
 		res =  uStIntHandlingDone;
 		
 	}	
-	
+	if (currentEvent->evType == evSecondsTick)
+	{
+		if (getSecondsInDurationTimer() == 1)  {
+			stopBuzzer();
+			res =  uStIntHandlingDone;
+		}
+	}
 	return res;
 }
 
@@ -155,8 +170,6 @@ uStInt evLightOnAlarmPausedChecker(void)
 	}
 	return (res);
 }
-
-
 
 
 void entryFatalErrorState(void)
