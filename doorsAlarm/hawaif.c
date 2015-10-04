@@ -146,14 +146,22 @@ uint16_t  tickCnt;
 uint16_t  ticksNeeded;
 
 
-void startDurationTimer(int16_t secs)
-{
-	
-}
-
 void stopDurationTimer()
 {
-	
+	cli();
+	TCCR0B &= ~((1 << CS00 ) | (1 << CS01 )  | (1 << CS02 ) );   // remove any prescaler bits
+	sei();
+}
+
+void startDurationTimer(int16_t secs)
+{
+	cli();
+	stopDurationTimer();    // clear all prescaler bits (= set CS01 to 0 !)
+	secondsDurationTimerRemaining = secs;
+	secondsInDurationTimer = 0;
+	tickCnt = 0;
+	TCCR0B |= ((1 << CS00 ) |  (1 << CS02 ) );   // prescaler 1024
+	sei();
 }
 
 int16_t getSecondsDurationTimerRemaining()
@@ -175,9 +183,32 @@ int16_t getSecondsInDurationTimer()
 	return res;
 }
 
+ISR(TIMER0_COMPA_vect)
+{
+	if (tickCnt >= (ticksNeeded -1) ){
+		tickCnt = 0;
+		runningSecondsTick = 1;
+		++secondsInDurationTimer;
+		--secondsDurationTimerRemaining;
+		if (secondsDurationTimerRemaining <= 0) {
+			timerReachedEvent = 1;
+			stopDurationTimer();
+		}
+	}  else  {
+		++ tickCnt;
+	}
+		
+}
+
 void initDurationTimer()
 {
-	
+	// buzzer using pwm on timer 2
+	TCCR0A = 0x00  ;
+	TCCR0B = (1 << WGM01);  // CTC on OCRA
+	TIMSK0  = (1<< OCIE0A);    // timer overflow interrupt enable
+	OCR0A = 200 ;  // gives so far a frequency of 108 with prescaler 1024
+	ticksNeeded =  108; 
+	tickCnt = 0;
 }
 
 
