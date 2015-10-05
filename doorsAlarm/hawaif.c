@@ -218,8 +218,29 @@ void initDurationTimer()
 
 void initDoorSensor()
 {
-	
+	DDRB &=  ~(1<<PORTB1);      //  pb1 as input
+	PORTB1  |=  (1<< PORTB1);    //  pull up switched on
+								//  assumed that PUD in MCUCR will not be set ....
+	PCICR |= (1<< PCIE1);		//  enable ex. pin change interrupt on port B
+	PCMSK1 |=  (1<< PCINT9) ;   //  on pcint09  (= pb1)
 }
+
+
+void retrieveDoorEvents ()
+{
+	if (PINB & (1<< PORTB1)) {
+		doorsClosedEvent = 1;
+		} else {
+		doorsOpenEvent = 1;			// todo : values to be tested, opened/closed might be vice-versa
+	}
+}
+
+
+ISR (PCINT1_vect)
+{
+	retrieveDoorEvents();
+}
+
 
 
 /////////////////////        end doorsensor code  /////////////////////////////
@@ -244,5 +265,9 @@ void initHW()
 
 void enterIdleSleepMode()
 {
-	
+	//	MCUCR |= 0x00;    //((1<<SM0) | (1<<SM1)); // select idle sleep mode
+	MCUCR |= (1<<SE) ; // enter idle sleep mode
+	sleep_cpu();
+	MCUCR &= ~(1<<SE); // disable sleep mode after wake up
+						// tobe tested
 }
