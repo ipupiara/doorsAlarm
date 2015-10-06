@@ -6,6 +6,7 @@
  */ 
 
 #include <avr/io.h>
+#include <avr/sleep.h>
 #include <stdio.h>
 #include <avr/interrupt.h>
 #include <util/atomic.h>
@@ -37,7 +38,7 @@ void stopBuzzer()
 void initBuzzer()
 {
 	// buzzer using pwm on timer 2
-	TCCR2A = (1 << WGM20) |  (1 <<  WGM21)  |  (1 << COM2B1)  ;
+	TCCR2A = ((1 << WGM20) |  (1 <<  WGM21)  |  (1 << COM2B1))  ;
 	TCCR2B = (1  << WGM22)  ;
 	OCR2A =  0x22;      // top value
 	OCR2B =  0x11;      //  square wave of approx 5k  at prescaler  64
@@ -219,7 +220,7 @@ void initDurationTimer()
 void initDoorSensor()
 {
 	DDRB &=  ~(1<<PORTB1);      //  pb1 as input
-	PORTB1  |=  (1<< PORTB1);    //  pull up switched on
+	PORTB |=  (1<< PORTB1);    //  pull up switched on
 								//  assumed that PUD in MCUCR will not be set ....
 	PCICR |= (1<< PCIE1);		//  enable ex. pin change interrupt on port B
 	PCMSK1 |=  (1<< PCINT9) ;   //  on pcint09  (= pb1)
@@ -255,9 +256,9 @@ void initHW()
 	timerReachedEvent = 0;
 	
 	initBuzzer();   // init pwm interface for buzzer using timer 2
-	initAlarm();     // init servo pwm interface using timer 1
-	initDurationTimer();  // using timer 0
-	initDoorSensor();
+//	initAlarm();     // init servo pwm interface using timer 1
+//	initDurationTimer();  // using timer 0
+//	initDoorSensor();
 	
 	sei();   
 }
