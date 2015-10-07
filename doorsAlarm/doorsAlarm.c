@@ -53,7 +53,6 @@ int main(void)
 
 	CDoorsAlarmEvent ev;
 	CDoorsAlarmEvent* pev = &ev;
-	int8_t ky;
 //	int16_t dummyI;
 
 

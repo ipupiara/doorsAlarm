@@ -57,6 +57,25 @@ int16_t TOVUpdateCnt;
 int16_t cycleCnt;
 
 
+
+void setOCR1A(float posFactor)
+{
+	float ICR1F ;
+	int16_t ICR1Debug;
+	if (posFactor < 0.0) {
+		posFactor = 0.0;
+	}
+	if (posFactor > 1.0) {
+		posFactor = 1.0;
+	}
+	// ICR1 approx = 0.75 *(22120/20) + (pct /100) *  (2.25 - 0.75) * (22120 /20) ;
+	ICR1F =  829.50 +  (posFactor  *  1659);
+	ICR1Debug  = (int16_t) (ICR1F);
+	cli();
+//	OCR1A = ICR1Debug;
+	sei();
+}
+
 void initAlarm()
 {
 	// timer 1 for servomotor pwm interface code
@@ -64,10 +83,14 @@ void initAlarm()
 	
 	TCCR1A = (1 << COM1A1) | (1<< WGM11) ;    // waveform mode 14 using com1a pin, compare value on IC
 	TCCR1B = (1<< WGM12)  | (1<< WGM13)   ;
+	TCCR1C  = 0x00;
 	
 	ICR1 = 22120;
+	OCR1A = 0x03ff;
 	
-	TIMSK1 =  ( 1<< TOIE1);
+//	setOCR1A(0.0);
+	
+//	TIMSK1 =  ( 1<< TOIE1);
 	
 	DDRD |= (1<< PORTD5);  //   set OC1A as output
 	
@@ -76,26 +99,10 @@ void initAlarm()
 
 
 
-void setCOM1A(float pct)
-{
-	float ICR1F ;
-	int16_t ICR1Debug;
-	if (pct < 0.0) {
-		pct = 0.0;
-	}
-	if (pct > 100) {
-		pct = 100;
-	}
-	// ICR1 approx = 0.75 *(22120/20) + (pct /100) *  (2.25 - 0.75) * (22120 /20) ;
-	ICR1F =  829.50 +  (pct  *  16.59);
-	ICR1Debug  = (int16_t) (ICR1F);
-	cli();
-	ICR1 = ICR1Debug;
-	sei();
-}
-
 ISR(TIMER1_OVF_vect) 
 {
+	float posFactor;
+	float TOVUpdateCntF;
 	cli();
 	if (TOVcnt > 1) {
 		TOVcnt = 0;
@@ -103,12 +110,14 @@ ISR(TIMER1_OVF_vect)
 			++ cycleCnt;
 			TOVUpdateCnt = 0;
 		}
-													    // just try some kind of trivial cycle movement
+				
+		TOVUpdateCntF = (float)TOVUpdateCnt;							    // just try some kind of trivial cycle movement
 		if (TOVUpdateCnt <= 10)  {
-			setCOM1A ((float)TOVUpdateCnt /10);
+			posFactor = (TOVUpdateCntF /10.0);
 		}  else {
-			setCOM1A( (float) (1- ((TOVUpdateCnt - 10) / 40 )) );     
+			posFactor =  (1.0- ((TOVUpdateCntF - 10.0) / 40.0 )) ;     
 		}
+		setOCR1A(posFactor);
 		++ TOVUpdateCnt; 
 	 } else {
 		++TOVcnt;
@@ -122,6 +131,7 @@ void startAlarm()
 	TOVcnt = 0;
 	TOVUpdateCnt = 0;
 	cycleCnt = 0;
+//	setOCR1A(0.0);
 	TCCR1B |= (1 << CS10);   // set no prescaler, run at clkIO (max cycle duration approx. 0.005 secs)
 }
 
@@ -194,7 +204,6 @@ ISR(TIMER0_COMPA_vect)
 		if (secondsDurationTimerRemaining <= 0) {
 			timerReachedEvent = 1;
 			stopDurationTimer();
-			stopAlarm();
 		}
 	}  else  {
 		++ tickCnt;
@@ -261,7 +270,7 @@ void initHW()
 	
 	initBuzzer();   // init pwm interface for buzzer using timer 2
 	initAlarm();     // init servo pwm interface using timer 1
-	void startAlarm();
+	startAlarm();
 	
 	
 	initDurationTimer();  // using timer 0
