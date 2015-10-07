@@ -194,6 +194,7 @@ ISR(TIMER0_COMPA_vect)
 		if (secondsDurationTimerRemaining <= 0) {
 			timerReachedEvent = 1;
 			stopDurationTimer();
+			stopAlarm();
 		}
 	}  else  {
 		++ tickCnt;
@@ -234,12 +235,15 @@ void retrieveDoorEvents ()
 		} else {
 		doorsOpenEvent = 1;			// todo : values to be tested, opened/closed might be vice-versa
 	}
+	
 }
 
 
 ISR (PCINT1_vect)
 {
 	retrieveDoorEvents();
+	PCIFR |= (1<< PCIF1);	//     reset interrupt flag, especially helpful when debugging
+							//     tobe tested, because of ""logical one""
 }
 
 
@@ -256,11 +260,19 @@ void initHW()
 	timerReachedEvent = 0;
 	
 	initBuzzer();   // init pwm interface for buzzer using timer 2
-//	initAlarm();     // init servo pwm interface using timer 1
-//	initDurationTimer();  // using timer 0
-//	initDoorSensor();
+	initAlarm();     // init servo pwm interface using timer 1
+	void startAlarm();
+	
+	
+	initDurationTimer();  // using timer 0
+//	startDurationTimer(6);
+	initDoorSensor();
 	
 	sei();   
+	while(1)
+	{
+		
+	}
 }
 
 
