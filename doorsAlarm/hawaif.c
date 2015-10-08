@@ -61,27 +61,27 @@ int16_t cycleCnt;
 void setOCR1A(float posFactor)
 {
 	float ICR1F ;
-	int16_t ICR1Debug;
+	int16_t OCR1ADebug;
 	if (posFactor < 0.0) {
 		posFactor = 0.0;
 	}
 	if (posFactor > 1.0) {
 		posFactor = 1.0;
 	}
-	// ICR1 approx = 0.75 *(22120/20) + (pct /100) *  (2.25 - 0.75) * (22120 /20) ;
-	ICR1F =  829.50 +  (posFactor  *  1659);
-	ICR1Debug  = (int16_t) (ICR1F);
+	// ICR1 approx = 0.75 *(27647/20) + (pct /100) *  (2.25 - 0.75) * (27647 /20 (=1382)) ;
+	ICR1F =  136.50 +  (posFactor  *  2073);
+	OCR1ADebug  = (int16_t) (ICR1F);
 	cli();
-//	OCR1A = ICR1Debug;
+	OCR1A = OCR1ADebug;
 	sei();
 }
 
 void initAlarm()
 {
 	// timer 1 for servomotor pwm interface code
-	//  and and servomotor value update   
+	//  and  servomotor value update   
 	
-	TCCR1A = (1 << COM1A1) | (1<< WGM11) ;    // waveform mode 14 using com1a pin, compare value on IC
+	TCCR1A = (1 << COM1A1) | (1<< WGM11) ;    // waveform mode 14 using com1a pin, compare tcnt1 value on ocr1a with ICR1 top
 	TCCR1B = (1<< WGM12)  | (1<< WGM13)   ;
 	TCCR1C  = 0x00;
 	
@@ -131,8 +131,9 @@ void startAlarm()
 	TOVcnt = 0;
 	TOVUpdateCnt = 0;
 	cycleCnt = 0;
-//	setOCR1A(0.0);
-	TCCR1B |= (1 << CS10);   // set no prescaler, run at clkIO (max cycle duration approx. 0.005 secs)
+	setOCR1A(0.0);
+	TCCR1B |= (1 << CS11);   // set  prescaler 8, run at 1/8 clkIO (max cycle duration approx.  0.04741 secs)
+								// will need ic1 of  27647    for cycle duration of approx 0.02 secs  
 }
 
 void stopAlarm()
