@@ -60,7 +60,7 @@ int16_t cycleCnt;
 
 void setOCR1A(float posFactor)
 {
-	float ICR1F ;
+	float ocr1aF ;
 	int16_t OCR1ADebug;
 	if (posFactor < 0.0) {
 		posFactor = 0.0;
@@ -68,9 +68,9 @@ void setOCR1A(float posFactor)
 	if (posFactor > 1.0) {
 		posFactor = 1.0;
 	}
-	// ICR1 approx = 0.75 *(27647/20) + (pct /100) *  (2.25 - 0.75) * (27647 /20 (=1382)) ;
-	ICR1F =  136.50 +  (posFactor  *  2073);
-	OCR1ADebug  = (int16_t) (ICR1F);
+	// ICR1 approx = 0.75 *(27647/20) + (pct ) *  (2.25 - 0.75) * (27647 /20 (=1382)) ;
+	ocr1aF =  1036.50 +  (posFactor  *  2073);
+	OCR1ADebug  = (int16_t) (ocr1aF);
 	cli();
 	OCR1A = OCR1ADebug;
 	sei();
