@@ -9,6 +9,8 @@
 #ifndef HAWAIF_H_
 #define HAWAIF_H_
 
+#define maxSecsPossible  0x7FFF
+
 int8_t  timerStarted;
 int8_t  timerReachedEvent;
 int8_t runningSecondsTick;
@@ -36,5 +38,7 @@ void stopBuzzer();
 void initHW();
 
 void enterIdleSleepMode();
+
+void retrieveDoorEvents ();
 
 #endif /* HAWAIF_H_ */

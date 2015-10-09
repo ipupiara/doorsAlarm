@@ -57,6 +57,22 @@ int16_t TOVUpdateCnt;
 int16_t cycleCnt;
 
 
+void alarmRelayOn()
+{
+	PORTB |= (1 << PORTB0);	
+}
+
+void alarmRelayOff()
+{
+	PORTB &= ~(1 << PORTB0);
+}
+
+void initRelay()
+{
+	PORTB &= ~(1 << PORTB0);
+	DDRB |= (1<< DDRB0 );
+}
+
 
 void setOCR1A(float posFactor)
 {
@@ -68,8 +84,8 @@ void setOCR1A(float posFactor)
 	if (posFactor > 1.0) {
 		posFactor = 1.0;
 	}
-	// ICR1 approx = 0.75 *(27647/20) + (pct ) *  (2.25 - 0.75) * (27647 /20 (=1382)) ;
-	ocr1aF =  1036.50 +  (posFactor  *  2073);
+	// ICR1 approx = 0.75 *(27651/20) + (pct ) *  (2.25 - 0.75) * (27651 /20 (=1383)) ;
+	ocr1aF =  1037.25 +  (posFactor  *  2074.5);
 	OCR1ADebug  = (int16_t) (ocr1aF);
 	cli();
 	OCR1A = OCR1ADebug;
@@ -78,23 +94,26 @@ void setOCR1A(float posFactor)
 
 void initAlarm()
 {
+	initRelay();
+		
 	// timer 1 for servomotor pwm interface code
 	//  and  servomotor value update   
 	
 	TCCR1A = (1 << COM1A1) | (1<< WGM11) ;    // waveform mode 14 using com1a pin, compare tcnt1 value on ocr1a with ICR1 top
 	TCCR1B = (1<< WGM12)  | (1<< WGM13)   ;
 	TCCR1C  = 0x00;
+	TCNT1  = 0x0000;
 	
-	ICR1 = 22120;
-	OCR1A = 0x03ff;
+	ICR1 = 27651;
 	
-//	setOCR1A(0.0);
+	setOCR1A(0.0);
 	
-//	TIMSK1 =  ( 1<< TOIE1);
+	TIMSK1 =  ( 1<< TOIE1);
 	
 	DDRD |= (1<< PORTD5);  //   set OC1A as output
 	
 	// and for timer 1 for buzzer pwm code
+	
 }
 
 
@@ -104,18 +123,18 @@ ISR(TIMER1_OVF_vect)
 	float posFactor;
 	float TOVUpdateCntF;
 	cli();
-	if (TOVcnt > 1) {
+	if (TOVcnt > 0) {
 		TOVcnt = 0;
-		if (TOVUpdateCnt > 50)  {
+		if (TOVUpdateCnt > 20)  {
 			++ cycleCnt;
-			TOVUpdateCnt = 0;
+			TOVUpdateCnt = 1;
 		}
 				
 		TOVUpdateCntF = (float)TOVUpdateCnt;							    // just try some kind of trivial cycle movement
-		if (TOVUpdateCnt <= 10)  {
-			posFactor = (TOVUpdateCntF /10.0);
+		if (TOVUpdateCnt <= 5)  {
+			posFactor = (TOVUpdateCntF /5.0);
 		}  else {
-			posFactor =  (1.0- ((TOVUpdateCntF - 10.0) / 40.0 )) ;     
+			posFactor =  (1.0- ((TOVUpdateCntF - 5.0) / 15.0 )) ;     
 		}
 		setOCR1A(posFactor);
 		++ TOVUpdateCnt; 
@@ -128,17 +147,20 @@ ISR(TIMER1_OVF_vect)
 
 void startAlarm()
 {
+	alarmRelayOn();
 	TOVcnt = 0;
 	TOVUpdateCnt = 0;
 	cycleCnt = 0;
+	TCNT1 = 0;
 	setOCR1A(0.0);
-	TCCR1B |= (1 << CS11);   // set  prescaler 8, run at 1/8 clkIO (max cycle duration approx.  0.04741 secs)
-								// will need ic1 of  27647    for cycle duration of approx 0.02 secs  
+	TCCR1B |= (1 << CS11);   // set  prescaler 8, run at 1/8 clkIO (max cycle duration approx.  0.04740 secs)
+								// will need ic1 of  27651    for cycle duration of approx 0.02 secs  
 }
 
 void stopAlarm()
 {
 	TCCR1B &= ~((1 << CS10 ) | (1 << CS11 )  | (1 << CS12 ) );   // remove any prescaler bits
+	alarmRelayOff();
 }
 
 

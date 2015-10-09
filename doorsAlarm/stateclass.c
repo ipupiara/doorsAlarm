@@ -68,6 +68,12 @@ uStInt evDoorsAlarmChecker(void)
 void entryIdleState(void)
 {
 	setState("idl");
+	startDurationTimer(maxSecsPossible);   // enable secondsTick
+}
+
+void exitIdleState(void)
+{
+	stopDurationTimer();
 }
 
 uStInt evIdleChecker(void)
@@ -80,6 +86,19 @@ uStInt evIdleChecker(void)
 				// No event action.
 			END_EVENT_HANDLER(PDoorsAlarmStateChart);
 			res =  uStIntHandlingDone;
+	}
+	if (currentEvent->evType == evTimerExpired)
+	{
+		startDurationTimer(maxSecsPossible);   // enable secondsTick
+		res =  uStIntHandlingDone;
+	}
+	if (currentEvent->evType == evSecondsTick)
+	{
+		if ( (getSecondsInDurationTimer() % 10) == 0)
+		{
+			retrieveDoorEvents ();
+		}
+		res =  uStIntHandlingDone;
 	}
 	return (res); 
 }
@@ -223,7 +242,7 @@ xStateType xaStates[eNumberOfStates] = {
  		0,
  		evIdleChecker,
  		entryIdleState,
- 		tfNull
+ 		exitIdleState
 	},
  	{eStateLightOnAlarm,
  		eStateDoorsAlarm,
