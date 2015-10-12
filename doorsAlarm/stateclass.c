@@ -22,31 +22,32 @@ void setState(char* sta)
 {
 	wwState = (stateString *) sta;
 	++stateEntryCnt;
+	printf("%i : %s\n",stateEntryCnt,sta);
 }
 
-CDoorsAlarmEvent* getNextEvent(CDoorsAlarmEvent* pev)
+CDoorsAlarmEvent* getNextEvent( CDoorsAlarmEvent* pev)
 {
 	CDoorsAlarmEvent* res = NULL;
 	if (fatalErrorOccurred) {     // do this with highest priority (at the beginning)
 		//			fatalErrorOccurred = 0;	  // once occurred state stays until restart/reset
 		pev->evType = evFatalError;
 		res = pev;
-	}
+	} else
 	if (doorsOpenEvent ==  1) {
 		doorsOpenEvent = 0;
 		pev->evType = evDoorsOpen;
 		res = pev;
-	}
+	} else
 	if (doorsClosedEvent ==  1) {
 		doorsClosedEvent = 0;
 		pev->evType = evDoorsClosed;
 		res = pev;
-	}
+	} else
 	if (timerReachedEvent ==  1) {
 		timerReachedEvent = 0;
 		pev->evType = evTimerExpired;
 		res = pev;
-	}
+	} else
 	if (runningSecondsTick){
 		//		cli();    // 8-bit access is already atomic
 		runningSecondsTick = 0;
@@ -134,7 +135,7 @@ void entryLightOnAlarmActiveState(void)
 
 void exitLightOnAlarmActiveState(void)
 {
-	setState("noS");
+//	setState("noS");
 	stopDurationTimer();
 	stopAlarm();
 	stopBuzzer();

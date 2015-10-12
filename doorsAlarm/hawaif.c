@@ -223,9 +223,9 @@ ISR(TIMER0_COMPA_vect)
 {
 	if (tickCnt >= (ticksNeeded -1) ){
 		tickCnt = 0;
-		runningSecondsTick = 1;
 		++secondsInDurationTimer;
 		--secondsDurationTimerRemaining;
+		runningSecondsTick = 1;
 		if (secondsDurationTimerRemaining <= 0) {
 			timerReachedEvent = 1;
 			stopDurationTimer();
@@ -243,7 +243,7 @@ void initDurationTimer()
 	TCCR0B = (1 << WGM01);  // CTC on OCRA
 	TIMSK0  = (1<< OCIE0A);    // timer overflow interrupt enable
 	OCR0A = 200 ;  // gives so far a frequency of 108 with prescaler 1024
-	ticksNeeded =  108; 
+	ticksNeeded =  54; 
 	tickCnt = 0;
 }
 
@@ -313,6 +313,7 @@ void initHW()
 void enterIdleSleepMode()
 {
 	//	MCUCR |= 0x00;    //((1<<SM0) | (1<<SM1)); // select idle sleep mode
+	ACSR |= (1 << ACD);  // disable analog comparator to save power (see atmega324a datasheet)
 	MCUCR |= (1<<SE) ; // enter idle sleep mode
 	sleep_cpu();
 	MCUCR &= ~(1<<SE); // disable sleep mode after wake up
