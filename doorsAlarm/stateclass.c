@@ -126,6 +126,7 @@ uStInt evLightOnAlarmChecker(void)
 void entryLightOnAlarmActiveState(void)
 {
 	setState("LAA");
+	retrieveDoorEvents();
 	startDurationTimer(5);
 	startAlarm();
 	startBuzzer();

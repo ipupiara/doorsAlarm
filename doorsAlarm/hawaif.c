@@ -121,7 +121,7 @@ void initAlarm()
 ISR(TIMER1_OVF_vect) 
 {
 	float posFactor;
-	float TOVUpdateCntF;
+//	float TOVUpdateCntF;
 	cli();
 	if (TOVcnt > 0) {
 		TOVcnt = 0;
@@ -130,13 +130,15 @@ ISR(TIMER1_OVF_vect)
 			TOVUpdateCnt = 1;
 		}
 				
-		TOVUpdateCntF = (float)TOVUpdateCnt;							    // just try some kind of trivial cycle movement
+//		TOVUpdateCntF = (float)TOVUpdateCnt;							    // just try some kind of trivial cycle movement
 		if (TOVUpdateCnt <= 5)  {
-			posFactor = (TOVUpdateCntF /5.0);
+			posFactor = 1;
+//			posFactor = (TOVUpdateCntF /5.0);
 		}  else {
-			posFactor =  (1.0- ((TOVUpdateCntF - 5.0) / 15.0 )) ;     
+			posFactor = 0;
+//			posFactor =  (1.0- ((TOVUpdateCntF - 5.0) / 15.0 )) ;     
 		}
-		setOCR1A(posFactor);
+		setOCR1A(posFactor);  
 		++ TOVUpdateCnt; 
 	 } else {
 		++TOVcnt;
@@ -293,18 +295,18 @@ void initHW()
 	
 	initBuzzer();   // init pwm interface for buzzer using timer 2
 	initAlarm();     // init servo pwm interface using timer 1
-	startAlarm();
-	
+//	startAlarm();
+//	stopAlarm();
 	
 	initDurationTimer();  // using timer 0
 //	startDurationTimer(6);
 	initDoorSensor();
 	
 	sei();   
-	while(1)
-	{
+//	while(1)
+//	{
 		
-	}
+//	}
 }
 
 
